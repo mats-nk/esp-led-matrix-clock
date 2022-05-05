@@ -11,6 +11,11 @@ define GPIOs, Credentials, Brigthness and Timezones in the platformio.ini.
 Brief description:
 During setup, the current time is obtained from an NTP via WLAN. If the clock is in operation, this process is repeated daily 
 
-![MatrixClock](https://github.com/schreibfaul1/ESP8266-LED-Matrix-Clock/blob/master/additional%20info/ESP8266_LED_Matrix_Clock.gif)
-![MatrixClock](https://github.com/schreibfaul1/ESP32-LED-Matrix-Clock/blob/master/additional%20info/ESP32_MatrixClock.jpg)
-![Schematic](https://github.com/schreibfaul1/ESP32-LED-Matrix-Clock/blob/master/additional%20info/ESP32_MatrixClock_schematic.JPG)
+### esp8266
+
+![MatrixClock](/additional%20info/ESP8266_LED_Matrix_Clock.gif)
+
+### esp32
+
+![MatrixClock](/additional%20info/ESP32_MatrixClock.jpg)
+![Schematic](/additional%20info/ESP32_MatrixClock_schematic.JPG)
