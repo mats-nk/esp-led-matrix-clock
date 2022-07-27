@@ -23,7 +23,11 @@
 #endif
 #ifdef ESP8266
 #include <ESP8266WiFi.h>
+#include <ESP8266WebServer.h>
 #endif
+#include <WiFiManager.h>
+WiFiManager _wifiManager;
+
 #include <time.h>
 #include "fonts.h"
 #include "tz.h"
@@ -40,6 +44,11 @@ bool _f_tckr50ms = false;                     // flag, set every 50msec
 boolean _f_updown = false;                    // scroll direction
 uint16_t _chbuf[256];
 
+#define SCREEN_MIN_BRIGHTNESS 0x01
+#define SCREEN_MAX_BRIGHTNESS 0x0b
+unsigned short screen_current_brightness = SCREEN_MIN_BRIGHTNESS;
+unsigned short screen_desired_brightness = SCREEN_MIN_BRIGHTNESS;
+
 #define NTP_SERVERS "us.pool.ntp.org", "time.nist.gov", "pool.ntp.org"
 #define NTP_MIN_VALID_EPOCH 1533081600 // August 1st, 2018
 
@@ -54,33 +63,42 @@ String WD_arr[7] = {"Sun,", "Mon,", "Tue,", "Wed,", "Thu,", "Fri,", "Sat,"};
 extern "C" uint8_t sntp_getreachability(uint8_t);
 
 void syncTime()
-{ // connect WiFi -> fetch ntp packet -> disconnect Wifi
-    uint8_t cnt = 0;
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
+{
+    // connect WiFi -> fetch ntp packet -> disconnect Wifi
+    // uint8_t cnt = 0;
 
-    while (WiFi.status() != WL_CONNECTED)
+    WiFi.mode(WIFI_STA);
+    // https://github.com/tzapu/WiFiManager/issues/1422
+    #ifdef ARDUINO_LOLIN_C3_MINI
+    WiFi.setTxPower(WIFI_POWER_8_5dBm);
+    #endif
+    
+    if (!_wifiManager.autoConnect())
     {
-        delay(500);
-        Serial.print(".");
-        cnt++;
-        if (cnt > 20)
-            break;
+        Serial.println("Failed to connect and hit timeout");
+#ifdef ESP8266
+        ESP.reset();
+#endif
+#ifdef ESP32
+        ESP.restart();
+#endif
+    }
+    else
+    {
+        Serial.println("\nConnected with: " + WiFi.SSID());
+        Serial.println("IP Address: " + WiFi.localIP().toString());
     }
 
-    if (WiFi.status() != WL_CONNECTED)
-        return;
-
-    Serial.println("\nconnected with: " + WiFi.SSID());
-    Serial.println("IP Address: " + WiFi.localIP().toString());
     time_t now;
-    // uint32_t timeout{millis()};
-    #ifdef ESP8266
+
+#ifdef ESP8266
     configTime(TIMEZONE, NTP_SERVERS);
-    #endif
-    #ifdef ESP32
+#endif
+#ifdef ESP32
     configTime(GMT_OFFSET_SEC, DAYLIGHT_OFFSET_SEC, NTP_SERVERS);
-    #endif
+#endif
+
+    Serial.print("Requesting current time ");
     int i = 1;
     while ((now = time(nullptr)) < NTP_MIN_VALID_EPOCH)
     {
@@ -90,38 +108,24 @@ void syncTime()
         i++;
     }
     Serial.println("Time synchronized");
-
     Serial.printf("Local time: %s", asctime(localtime(&now))); // print formated local time, same as ctime(&now)
     Serial.printf("UTC time:   %s", asctime(gmtime(&now)));    // print formated GMT/UTC time
 
-    // do
-    // {
-    //     delay(25);
-    //     if (millis() - timeout >= 1e3)
-    //     {
-    //         Serial.printf("waiting for NTP %02ld sec\n", (millis() - timeout) / 1000);
-    //         delay(975);
-    //     }
-    //     sntp_getreachability(0) ? timeSync = true : sntp_getreachability(1) ? timeSync = true
-    //                                             : sntp_getreachability(2)   ? timeSync = true
-    //                                                                         : false;
-    // } while (millis() - timeout <= 16e3 && !timeSync);
-
-    // Serial.printf("NTP Synchronization %s!\n", timeSync ? "successfully" : "failed");
-    // WiFi.disconnect();
-    // return timeSync;
+    WiFi.mode(WIFI_OFF);
 }
 //----------------------------------------------------------------------------------------------------------------------
 
-const uint8_t InitArr[7][2] = {
-    {0x0C, 0x00}, // display off
-    {0x00, 0xFF}, // no LEDtest
-    {0x09, 0x00}, // BCD off
-    {0x0F, 0x00}, // normal operation
-    {0x0B, 0x07}, // start display
-    {0x0A, 0x04}, // brightness
-    {0x0C, 0x01}  // display on
+const uint8_t InitArr[7][2] =
+    {
+        {0x0C, 0x00}, // display off
+        {0x00, 0xFF}, // no LEDtest
+        {0x09, 0x00}, // BCD off
+        {0x0F, 0x00}, // normal operation
+        {0x0B, 0x07}, // start display
+        {0x0A, 0x04}, // brightness
+        {0x0C, 0x01}  // display on
 };
+
 //----------------------------------------------------------------------------------------------------------------------
 
 void helpArr_init(void)
@@ -141,6 +145,7 @@ void helpArr_init(void)
         }
     }
 }
+
 //----------------------------------------------------------------------------------------------------------------------
 
 void max7219_init()
@@ -158,7 +163,21 @@ void max7219_init()
         digitalWrite(SCREEN_CS, HIGH);
     }
 }
-//----------------------------------------------------------------------------------------------------------------------
+
+// detect desired screen brightness based on hour
+unsigned short max7219_calc_brightness(unsigned short hour)
+{
+    if (hour >= 20)
+        return SCREEN_MIN_BRIGHTNESS;
+    else if (hour >= 16)
+        return map(hour, 16, 20, SCREEN_MAX_BRIGHTNESS, SCREEN_MIN_BRIGHTNESS);
+    else if (hour >= 8)
+        return SCREEN_MAX_BRIGHTNESS;
+    else if (hour >= 4)
+        return map(hour, 4, 8, SCREEN_MIN_BRIGHTNESS, SCREEN_MAX_BRIGHTNESS);
+    else
+       return SCREEN_MIN_BRIGHTNESS;
+}
 
 void max7219_set_brightness(unsigned short br)
 { // brightness MAX7219
@@ -175,6 +194,18 @@ void max7219_set_brightness(unsigned short br)
         digitalWrite(SCREEN_CS, HIGH);
     }
 }
+
+void max7219_update_brightness(unsigned short hour)
+{
+    screen_desired_brightness = max7219_calc_brightness(hour);
+    if (screen_current_brightness > screen_desired_brightness)
+        max7219_set_brightness(--screen_current_brightness);
+    else if (screen_current_brightness < screen_desired_brightness)
+        max7219_set_brightness(++screen_current_brightness);
+
+    // Serial.printf("%d -> %d <- %d\n", hour, screen_desired_brightness, screen_current_brightness);
+}
+
 //----------------------------------------------------------------------------------------------------------------------
 
 void clear_Display()
@@ -433,34 +464,53 @@ void timer50ms()
         cnt1h = 0;
     }
 }
+
 //----------------------------------------------------------------------------------------------------------------------
 
 void setup()
 {
     Serial.begin(SERIAL_BAUD);
+    #if ARDUINO_HW_CDC_ON_BOOT
+    delay(2000);
+    #else
     delay(100);
+    #endif
+
+    WiFi.mode(WIFI_OFF);
+
+    String ssid = "ESP-" + String((unsigned long)
+#ifdef ESP8266
+    ESP.getChipId()
+#endif
+#ifdef ESP32
+    ESP.getEfuseMac()
+#endif
+                           );
+    WiFi.hostname(ssid);
+
     pinMode(SCREEN_CS, OUTPUT);
     digitalWrite(SCREEN_CS, HIGH);
 
     syncTime();
 
-    #ifdef ESP8266
+#ifdef ESP8266
     SPI.begin();
-    #endif
-    #ifdef ESP32
+#endif
+#ifdef ESP32
     SPI.begin(SPI_SCK, SPI_MISO, SPI_MOSI);
-    #endif
+#endif
     helpArr_init();
     max7219_init();
     clear_Display();
-    max7219_set_brightness(SCREEN_BRIGHTNESS);
+
+    max7219_set_brightness(SCREEN_MIN_BRIGHTNESS);
     tckr.attach(0.05, timer50ms); // every 50 msec
 
 #ifdef SCREEN_SCROLLDOWN
     _f_updown = true;
 #else
     _f_updown = false;
-#endif 
+#endif
 
     _zPosX = _maxPosX;
     _dPosX = -8;
@@ -517,7 +567,7 @@ void loop()
             h = 12;
         hour1 = (h % 10);
         hour2 = (h / 10);
-#endif 
+#endif
 
         y = y2; // scroll updown
         sc1 = 1;
@@ -566,7 +616,7 @@ void loop()
             hour2 = 0;
             sc6 = 1;
         }
-#endif 
+#endif
         sec11 = sec12;
         sec12 = sec1;
         sec21 = sec22;
@@ -584,9 +634,11 @@ void loop()
 #ifdef UDTXT
         if (tm.tm_sec == 25)
             f_scroll_x2 = true; // scroll userdefined text
-#endif                          // UDTXT
-    }                           // end lastsec
-                                // ----------------------------------------------
+#endif                          
+
+        max7219_update_brightness(tm.tm_hour);
+    }                           
+                                
     if (_f_tckr50ms == true)
     {
         _f_tckr50ms = false;
@@ -616,7 +668,8 @@ void loop()
                 _dPosX = -8;
             }
         }
-        // -------------------------------------
+
+        #if (SCREEN_CNT > 4)
         if (sc1 == 1)
         {
             if (_f_updown == 1)
@@ -633,7 +686,7 @@ void loop()
         }
         else
             char2Arr_t(48 + sec1, _zPosX - 42, 0);
-        //  -------------------------------------
+
         if (sc2 == 1)
         {
             char2Arr_t(48 + sec22, _zPosX - 36, y);
@@ -643,8 +696,10 @@ void loop()
         }
         else
             char2Arr_t(48 + sec2, _zPosX - 36, 0);
+
         char2Arr_t(':', _zPosX - 32, 0);
-        //  -------------------------------------
+        #endif
+        
         if (sc3 == 1)
         {
             char2Arr_t(48 + min12, _zPosX - 25, y);
@@ -654,7 +709,7 @@ void loop()
         }
         else
             char2Arr_t(48 + min1, _zPosX - 25, 0);
-        // -------------------------------------
+
         if (sc4 == 1)
         {
             char2Arr_t(48 + min22, _zPosX - 19, y);
@@ -664,8 +719,9 @@ void loop()
         }
         else
             char2Arr_t(48 + min2, _zPosX - 19, 0);
+
         char2Arr_t(':', _zPosX - 15 + x, 0);
-        // -------------------------------------
+
         if (sc5 == 1)
         {
             char2Arr_t(48 + hour12, _zPosX - 8, y);
@@ -675,7 +731,7 @@ void loop()
         }
         else
             char2Arr_t(48 + hour1, _zPosX - 8, 0);
-        // -------------------------------------
+
         if (sc6 == 1)
         {
             char2Arr_t(48 + hour22, _zPosX - 2, y);
@@ -685,7 +741,7 @@ void loop()
         }
         else
             char2Arr_t(48 + hour2, _zPosX - 2, 0);
-        //      -------------------------------------
+
         if (f_scroll_x1)
         { // day month year
             String txt = "   ";
@@ -706,6 +762,7 @@ void loop()
         if (f_scrollend_y == true)
             f_scrollend_y = false;
     } // end 50ms
+    
     // -----------------------------------------------
     if (y == 0)
     {
