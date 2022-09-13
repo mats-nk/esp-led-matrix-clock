@@ -25,8 +25,13 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #endif
+
+#if defined(WIFI_SSID) && defined(WIFI_PASS)
+#define WIFI_STATIC
+#else
 #include <WiFiManager.h>
 WiFiManager _wifiManager;
+#endif
 
 #include <time.h>
 #include "fonts.h"
@@ -73,6 +78,22 @@ void syncTime()
     WiFi.setTxPower(WIFI_POWER_8_5dBm);
     #endif
     
+    #ifdef WIFI_STATIC
+    uint8_t cnt = 0;
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+        cnt++;
+        if (cnt > 20)
+            break;
+    }
+
+    if (WiFi.status() != WL_CONNECTED)
+        return;
+    #else
     if (!_wifiManager.autoConnect())
     {
         Serial.println("Failed to connect and hit timeout");
@@ -83,11 +104,10 @@ void syncTime()
         ESP.restart();
 #endif
     }
-    else
-    {
-        Serial.println("\nConnected with: " + WiFi.SSID());
-        Serial.println("IP Address: " + WiFi.localIP().toString());
-    }
+    #endif
+
+    Serial.println("\nConnected with: " + WiFi.SSID());
+    Serial.println("IP Address: " + WiFi.localIP().toString());
 
     time_t now;
 
