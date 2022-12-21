@@ -1,6 +1,6 @@
 # ESP8266-LED-Matrix-Clock
 
-https://www.youtube.com/watch?v=mea5-qX4O54
+![image](https://user-images.githubusercontent.com/5459747/208926467-28fd283d-614e-4183-b4f9-c0008e6ef104.png)
 
 Are required:
 - 4 or 6 MAX7219 incl 8x LED-Matrix8x8
@@ -16,11 +16,8 @@ Brief description:
 
 During setup, the current time is obtained from an NTP via WLAN. If the clock is in operation, this process is repeated daily 
 
-### esp8266
+## Where to buy
 
-![MatrixClock](/additional%20info/ESP8266_LED_Matrix_Clock.gif)
+Available as Kit on [Tindie](https://www.tindie.com/products/sonocotta/esp8266-led-matrix-clock-diy-kit/)
 
-### esp32
-
-![MatrixClock](/additional%20info/ESP32_MatrixClock.jpg)
-![Schematic](/additional%20info/ESP32_MatrixClock_schematic.JPG)
+![image](https://user-images.githubusercontent.com/5459747/208926760-a6d0adaa-ce00-4d79-8fd4-97c3cfef58a9.png)
