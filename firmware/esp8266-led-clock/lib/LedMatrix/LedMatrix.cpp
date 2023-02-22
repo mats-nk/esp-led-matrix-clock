@@ -58,6 +58,10 @@ LedMatrix::~LedMatrix()
     // delete[] Leds;
 }
 
+void LedMatrix::invert() {
+    isInvert = !isInvert;
+}
+
 void LedMatrix::setBrightness(uint8_t br)
 {
     uint8_t j;
@@ -93,9 +97,9 @@ void LedMatrix::apply()
 #endif
 
 #ifdef REVERSE_VERTICAL
-            SPI.write(Leds[j - 1][7 - i]);
+            SPI.write(isInvert ? ~(Leds[j - 1][7 - i]) : Leds[j - 1][7 - i]);
 #else
-            SPI.write(Leds[j - 1][i]);
+            SPI.write(isInvert ? ~(Leds[j - 1][i]) : Leds[j - 1][i]);
 #endif
 
 #ifdef REVERSE_HORIZONTAL
