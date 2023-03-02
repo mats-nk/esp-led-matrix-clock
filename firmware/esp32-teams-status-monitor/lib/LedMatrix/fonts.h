@@ -1,3 +1,6 @@
+#define SYMBOL_WIDTH 5
+#define SYMBOL_HEIGHT 8
+
 // Font 5x8 for 8x8 matrix, 0,0 is above right
 const uint8_t font_t[96][9] = { // monospace font only for the time
         { 0x07, 0x1c, 0x22, 0x26, 0x2a, 0x32, 0x22, 0x1c, 0x00 },   // 0x30, 0

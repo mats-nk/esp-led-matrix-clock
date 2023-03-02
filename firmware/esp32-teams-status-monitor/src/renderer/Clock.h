@@ -15,18 +15,23 @@ private:
     unsigned short _maxPosX = SCREEN_CNT * 8 - 1;
     unsigned int _dPosX = _maxPosX;
     unsigned int _zPosX = 0;
-    bool _f_tckr50ms = false;
 
     Ticker tick;
     TimeSource *time;
 
 public:
+    bool _f_tckr50ms = false;
     Clock(LedMatrix *mx, TimeSource *time)
         : Renderer(mx), time(time){};
 
     void init() override;
     void display() override;
 };
+
+void __clock_ticker_callback(Clock *self)
+{
+    self->_f_tckr50ms = true;
+}
 
 void Clock::init()
 {
@@ -38,9 +43,7 @@ void Clock::init()
     _zPosX = _maxPosX;
     _dPosX = -8;
 
-    tick.attach_ms(50, [&](){
-        _f_tckr50ms = true;
-    });
+    tick.attach_ms(50, __clock_ticker_callback, this);
 }
 
 void Clock::display()
@@ -72,19 +75,19 @@ void Clock::display()
         y1 = -8;
     }
 
-    if (tm.tm_sec != lastsec)
+    if (tm->tm_sec != lastsec)
     {
-        lastsec = tm.tm_sec;
+        lastsec = tm->tm_sec;
 
-        sec1 = (tm.tm_sec % 10);
-        sec2 = (tm.tm_sec / 10);
-        min1 = (tm.tm_min % 10);
-        min2 = (tm.tm_min / 10);
+        sec1 = (tm->tm_sec % 10);
+        sec2 = (tm->tm_sec / 10);
+        min1 = (tm->tm_min % 10);
+        min2 = (tm->tm_min / 10);
 #ifdef SCREEN_FORMAT24H
-        hour1 = (tm.tm_hour % 10); // 24 hour format
-        hour2 = (tm.tm_hour / 10);
+        hour1 = (tm->tm_hour % 10); // 24 hour format
+        hour2 = (tm->tm_hour / 10);
 #else
-        uint8_t h = tm.tm_hour; // convert to 12 hour format
+        uint8_t h = tm->tm_hour; // convert to 12 hour format
         if (h > 12)
             h -= 12;
         if (h == 0)
@@ -153,10 +156,10 @@ void Clock::display()
         hour12 = hour1;
         hour21 = hour22;
         hour22 = hour2;
-        if (tm.tm_sec == 45)
+        if (tm->tm_sec == 45)
             f_scroll_x1 = true; // scroll ddmmyy
 #ifdef UDTXT
-        if (tm.tm_sec == 25)
+        if (tm->tm_sec == 25)
             f_scroll_x2 = true; // scroll userdefined text
 #endif
     }
@@ -267,10 +270,10 @@ void Clock::display()
         if (f_scroll_x1)
         { // day month year
             String txt = "   ";
-            txt += WD_arr[tm.tm_wday] + " ";
-            txt += String(tm.tm_mday) + ". ";
-            txt += M_arr[tm.tm_mon] + " ";
-            // txt += String(tm.tm_year + 1900) + "   ";
+            txt += WD_arr[tm->tm_wday] + " ";
+            txt += String(tm->tm_mday) + ". ";
+            txt += M_arr[tm->tm_mon] + " ";
+            // txt += String(tm->tm_year + 1900) + "   ";
             sctxtlen = mx->scrollText(_dPosX, txt);
         }
         //      -------------------------------------

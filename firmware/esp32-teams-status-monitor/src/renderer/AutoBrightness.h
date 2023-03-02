@@ -44,7 +44,7 @@ uint8_t AutoBrightness::calcBrightness(uint8_t hour) {
 
 void AutoBrightness::display()
 {
-    uint8_t hour = timeSource.get().tm_hour;
+    uint8_t hour = timeSource.get()->tm_hour;
     screen_desired_brightness = calcBrightness(hour);
     if (screen_current_brightness > screen_desired_brightness)
         mx->setBrightness(--screen_current_brightness);

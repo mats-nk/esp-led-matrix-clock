@@ -1,9 +1,9 @@
-name: PlatformIO CI
+name: Build esp32-teams-status-monitor
 
 on: 
   push: 
     paths: 
-    - ./firmware/esp8266-teams-status-monitor
+    - ./firmware/esp32-teams-status-monitor
   pull_request:
   workflow_dispatch:
 
@@ -36,6 +36,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
     
-    - name: Build esp8266-teams-status-monitor
-      working-directory: ./firmware/esp8266-teams-status-monitor
+    - name: Build esp32-teams-status-monitor
+      working-directory: ./firmware/esp32-teams-status-monitor
       run: pio run
