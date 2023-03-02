@@ -25,6 +25,7 @@ private:
     WiFiManager *_wifiManager;
     Ticker tick;
     tm Time;
+
 public:
     TimeSource(WiFiManager *wm) : _wifiManager(wm){};
     ~TimeSource();
@@ -35,7 +36,8 @@ public:
     tm get();
 };
 
-tm TimeSource::get() {
+tm TimeSource::get()
+{
     time_t now = time(&now);
     localtime_r(&now, &Time);
     return Time;
@@ -46,12 +48,14 @@ TimeSource::~TimeSource()
     tick.detach();
 }
 
+void __timesource_tick_callback(TimeSource *self)
+{
+    self->sync();
+}
+
 void TimeSource::init()
 {
-    tick.attach(NTP_UPDATE_EVERY_SEC, [&]()
-    {
-        sync();
-    });
+    tick.attach(NTP_UPDATE_EVERY_SEC, __timesource_tick_callback, this);
 }
 
 void TimeSource::sync()

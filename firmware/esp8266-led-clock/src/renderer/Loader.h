@@ -3,27 +3,30 @@
 #include "Renderer.h"
 #include <Ticker.h>
 
+const String __loader_string = "Loading...";
+
 class Loader : public Renderer
 {
 private:
     Ticker tick;
-    const String loading = "Loading. .  .   .    .";
     const unsigned short _maxPosX = SCREEN_CNT * 8 - 1;
-    unsigned int _dPosX = _maxPosX;
 
 public:
+    unsigned int _dPosX = _maxPosX;
     Loader(LedMatrix *mx) : Renderer(mx){};
 
     void init() override;
     void stop();
 };
 
+void __loader_tick_callback(Loader* self) {
+    self->mx->scrollText(self->_dPosX++, __loader_string);
+    self->mx->apply();
+}
+
 void Loader::init()
 {
-    tick.attach(0.1, [&](){
-        mx->scrollText(_dPosX++, loading);
-        mx->apply(); 
-    });
+    tick.attach_ms(200, __loader_tick_callback, this);
 }
 
 void Loader::stop()

@@ -28,6 +28,10 @@ public:
     void display() override;
 };
 
+void __clock_ticker_callback(bool* _flag) {
+    *_flag = true;
+}
+
 void Clock::init()
 {
 #ifdef SCREEN_SCROLLDOWN
@@ -38,9 +42,7 @@ void Clock::init()
     _zPosX = _maxPosX;
     _dPosX = -8;
 
-    tick.attach_ms(50, [&](){
-        _f_tckr50ms = true;
-    });
+    tick.attach_ms(50, __clock_ticker_callback, &_f_tckr50ms);
 }
 
 void Clock::display()

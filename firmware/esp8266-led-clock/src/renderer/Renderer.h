@@ -4,12 +4,12 @@
 class Renderer
 {
 protected:
-    LedMatrix *mx;
 
 public:
     Renderer(LedMatrix *mx) : mx(mx){};
     virtual ~Renderer(){};
 
+    LedMatrix *mx;
     virtual void init(){};
     virtual void display(){};
 };
