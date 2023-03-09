@@ -27,6 +27,7 @@ private:
     tm Time;
 
 public:
+    TimeSource() : _wifiManager(nullptr){};
     TimeSource(WiFiManager *wm) : _wifiManager(wm){};
     ~TimeSource();
 
@@ -60,32 +61,30 @@ void TimeSource::init()
 
 void TimeSource::sync()
 {
-    // connect WiFi -> fetch ntp packet -> disconnect Wifi
-    // uint8_t cnt = 0;
-
     WiFi.mode(WIFI_STA);
 #ifdef ARDUINO_LOLIN_C3_MINI
     WiFi.setTxPower(WIFI_POWER_8_5dBm); // https://github.com/tzapu/WiFiManager/issues/1422
-
 #endif
 
-#ifdef WIFI_STATIC
-    uint8_t cnt = 0;
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PASS);
-    while (WiFi.status() != WL_CONNECTED)
+    if (!_wifiManager)
     {
-        delay(500);
-        Serial.print(".");
-        cnt++;
-        if (cnt > 20)
-            break;
-    }
+        uint8_t cnt = 0;
+#if defined(WIFI_SSID) && defined(WIFI_PASS)
+        WiFi.begin(WIFI_SSID, WIFI_PASS);
+#endif
+        while (WiFi.status() != WL_CONNECTED)
+        {
+            delay(500);
+            Serial.print(".");
+            cnt++;
+            if (cnt > 20)
+                break;
+        }
 
-    if (WiFi.status() != WL_CONNECTED)
-        return;
-#else
-    if (!_wifiManager->autoConnect())
+        if (WiFi.status() != WL_CONNECTED)
+            return;
+    }
+    else if (!_wifiManager->autoConnect())
     {
         Serial.println("Failed to connect and hit timeout");
 #ifdef ESP8266
@@ -95,7 +94,6 @@ void TimeSource::sync()
         ESP.restart();
 #endif
     }
-#endif
 
     Serial.println("\nConnected with: " + WiFi.SSID());
     Serial.println("IP Address: " + WiFi.localIP().toString());

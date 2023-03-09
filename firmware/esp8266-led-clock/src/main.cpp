@@ -1,18 +1,17 @@
 #include <Arduino.h>
 #include <SPI.h>
 
+#include "TimeSource.h"
 #if defined(WIFI_SSID) && defined(WIFI_PASS)
-#define WIFI_STATIC
+TimeSource timeSource;
 #else
 #include <WiFiManager.h>
 WiFiManager wm;
+TimeSource timeSource(&wm);
 #endif
 
 #include <LedMatrix.h>
 LedMatrix matrix(SCREEN_CNT);
-
-#include "TimeSource.h"
-TimeSource timeSource(&wm);
 
 #include "renderer/Loader.h"
 Loader loader(&matrix);
