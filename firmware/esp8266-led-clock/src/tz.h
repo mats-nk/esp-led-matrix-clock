@@ -243,3 +243,5 @@
 //    US/Hawaii                 HST10
 //    US/Michigan               EST5EDT,M3.2.0,M11.1.0
 //    US/Samoa                  SST11
+//    US/Los Angeles            PST8PDT,M3.2.0,M11.1.0
+//    US/Houston                CST6CDT,M3.2.0,M11.1.0
