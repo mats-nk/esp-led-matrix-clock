@@ -11,6 +11,7 @@ public:
 
     void init();
     void setBrightness(uint8_t);
+    void invert();
     void clear();
     void apply();
 
@@ -20,6 +21,7 @@ public:
     uint8_t char2Arr_t(unsigned short ch, int PosX, short PosY);
 
     uint8_t Count;
+    bool isInvert = false;
     uint8_t Leds[SCREEN_CNT][8] = {};
 
 protected:
