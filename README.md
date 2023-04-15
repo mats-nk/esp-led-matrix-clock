@@ -18,6 +18,7 @@ During setup, the current time is obtained from an NTP via WLAN. If the clock is
 
 ## Where to buy
 
-Available as Kit on [Tindie](https://www.tindie.com/products/sonocotta/esp8266-led-matrix-clock-diy-kit/)
+Available as Kit on [Tindie](https://www.tindie.com/products/sonocotta/esp8266-led-matrix-clock-diy-kit/). Assembly instructions can be found [here](https://hackaday.io/project/188093/instructions)
 
 ![image](https://user-images.githubusercontent.com/5459747/208926760-a6d0adaa-ce00-4d79-8fd4-97c3cfef58a9.png)
+
