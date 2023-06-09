@@ -2,11 +2,11 @@
 
 #include <Arduino.h>
 #ifdef ESP32
-#include <WiFi.h>
+  #include <WiFi.h>
 #endif
 #ifdef ESP8266
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
+  #include <ESP8266WiFi.h>
+  #include <ESP8266WebServer.h>
 #endif
 
 #include <WiFiManager.h>
@@ -14,9 +14,8 @@
 #include <time.h>
 #include "tz.h"
 
-#define NTP_SERVERS "us.pool.ntp.org", "time.nist.gov", "pool.ntp.org"
-#define NTP_MIN_VALID_EPOCH 1533081600 // August 1st, 2018
-
+#define NTP_SERVERS "pool.ntp.org", "europe.pool.ntp.org", "north-america.pool.ntp.org"
+#define NTP_MIN_VALID_EPOCH 1688713627                  // 2023-07-07
 #define NTP_UPDATE_EVERY_SEC (60 * 60 * 24)
 
 class TimeSource
@@ -63,7 +62,7 @@ void TimeSource::sync()
 {
     WiFi.mode(WIFI_STA);
 #ifdef ARDUINO_LOLIN_C3_MINI
-    WiFi.setTxPower(WIFI_POWER_8_5dBm); // https://github.com/tzapu/WiFiManager/issues/1422
+    WiFi.setTxPower(WIFI_POWER_8_5dBm);    // https://github.com/tzapu/WiFiManager/issues/1422
 #endif
 
     if (!_wifiManager)
@@ -117,8 +116,8 @@ void TimeSource::sync()
         i++;
     }
     Serial.println("Time synchronized");
-    Serial.printf("Local time: %s", asctime(localtime(&now))); // print formated local time, same as ctime(&now)
-    Serial.printf("UTC time:   %s", asctime(gmtime(&now)));    // print formated GMT/UTC time
+    Serial.printf("Local time: %s", asctime(localtime(&now))); // Print formated local time, same as ctime(&now)
+    Serial.printf("UTC time:   %s", asctime(gmtime(&now)));    // Print formated GMT/UTC time
 
     WiFi.mode(WIFI_OFF);
 }
