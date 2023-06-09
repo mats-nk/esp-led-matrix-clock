@@ -1,6 +1,6 @@
 # ESP8266-LED-Matrix-Clock
 
-<img src="[images/pic1.png]" width="300"/>
+<img src="images/pic1.png" width="600"/>
 
 ## Firmware versions
 
@@ -26,12 +26,12 @@ During setup, the current time is obtained from an NTP via WLAN. If the clock is
 
 ## Hardware
 
-<img src="[images/PCB.png]" width="300"/>
+<img src="images/PCB.png" width="600"/>
 
-<img src="[images/Schema.png]" width="300"/>
+<img src="images/Schema.png" width="600"/>
 
 ## Where to buy
 
 Available as Kit on [Tindie](https://www.tindie.com/products/sonocotta/esp8266-led-matrix-clock-diy-kit/). Assembly instructions can be found [here](https://hackaday.io/project/188093/instructions)
 
-![image](https://user-images.githubusercontent.com/5459747/208926760-a6d0adaa-ce00-4d79-8fd4-97c3cfef58a9.png)
+<img src="https://user-images.githubusercontent.com/5459747/208926760-a6d0adaa-ce00-4d79-8fd4-97c3cfef58a9.png" width="600"/>
